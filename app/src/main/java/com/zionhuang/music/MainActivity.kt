@@ -203,6 +203,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
+            //检查更新
             LaunchedEffect(Unit) {
                 if (System.currentTimeMillis() - Updater.lastCheckTime > 1.days.inWholeMilliseconds) {
                     Updater.getLatestVersionName().onSuccess {
@@ -211,6 +212,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            //设置主题
             val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
             val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
             val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
@@ -251,6 +253,7 @@ class MainActivity : ComponentActivity() {
                 pureBlack = pureBlack,
                 themeColor = themeColor
             ) {
+                //主体内容
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
@@ -284,7 +287,7 @@ class MainActivity : ComponentActivity() {
                         Screens.Playlists.route,
                         "settings"
                     )
-
+                    //解构函数
                     val (query, onQueryChange) = rememberSaveable(stateSaver = TextFieldValue.Saver) {
                         mutableStateOf(TextFieldValue())
                     }
@@ -459,6 +462,7 @@ class MainActivity : ComponentActivity() {
                         onDispose { removeOnNewIntentListener(listener) }
                     }
 
+                    //用于在 Composable 树中提供局部的依赖或状态，它通过 CompositionLocal 的方式共享数据
                     CompositionLocalProvider(
                         LocalDatabase provides database,
                         LocalContentColor provides contentColorFor(MaterialTheme.colorScheme.surface),
@@ -540,21 +544,26 @@ class MainActivity : ComponentActivity() {
                                         )
                                     )
                                 },
+                                //前导图标
                                 leadingIcon = {
                                     IconButton(
                                         onClick = {
+                                            //判断条件
                                             when {
+                                                //当前为搜索状态,则关闭搜索
                                                 active -> onActiveChange(false)
+                                                //上一页不存在于navigationItems,则返回上一页
                                                 !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
                                                     navController.navigateUp()
                                                 }
-
+                                                //其他,则开启搜索
                                                 else -> onActiveChange(true)
                                             }
                                         },
                                         onLongClick = {
                                             when {
                                                 active -> {}
+                                                //上一页不存在于navigationItems,则返回到主页
                                                 !navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } -> {
                                                     navController.backToMain()
                                                 }
@@ -575,7 +584,9 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 },
+                                //尾随图标
                                 trailingIcon = {
+                                    //激活搜索的时候,显示本地库或网络库图标,用于表示搜索结果的来源
                                     if (active) {
                                         if (query.text.isNotEmpty()) {
                                             IconButton(
@@ -602,7 +613,9 @@ class MainActivity : ComponentActivity() {
                                                 contentDescription = null
                                             )
                                         }
-                                    } else if (navBackStackEntry?.destination?.route in topLevelScreens) {
+                                    }
+                                    //未激活且在顶层页面时,显示设置图标
+                                    else if (navBackStackEntry?.destination?.route in topLevelScreens) {
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
@@ -631,6 +644,7 @@ class MainActivity : ComponentActivity() {
                                 focusRequester = searchBarFocusRequester,
                                 modifier = Modifier.align(Alignment.TopCenter),
                             ) {
+                                //页面切换时的淡入淡出动画效果
                                 Crossfade(
                                     targetState = searchSource,
                                     label = "",
@@ -675,10 +689,18 @@ class MainActivity : ComponentActivity() {
                                 .align(Alignment.BottomCenter)
                                 .offset {
                                     if (navigationBarHeight == 0.dp) {
-                                        IntOffset(x = 0, y = (bottomInset + NavigationBarHeight).roundToPx())
+                                        IntOffset(
+                                            x = 0,
+                                            y = (bottomInset + NavigationBarHeight).roundToPx()
+                                        )
                                     } else {
-                                        val slideOffset = (bottomInset + NavigationBarHeight) * playerBottomSheetState.progress.coerceIn(0f, 1f)
-                                        val hideOffset = (bottomInset + NavigationBarHeight) * (1 - navigationBarHeight / NavigationBarHeight)
+                                        val slideOffset =
+                                            (bottomInset + NavigationBarHeight) * playerBottomSheetState.progress.coerceIn(
+                                                0f,
+                                                1f
+                                            )
+                                        val hideOffset =
+                                            (bottomInset + NavigationBarHeight) * (1 - navigationBarHeight / NavigationBarHeight)
                                         IntOffset(
                                             x = 0,
                                             y = (slideOffset + hideOffset).roundToPx()

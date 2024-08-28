@@ -114,6 +114,7 @@ fun SearchBar(
         }
     }
 
+    //搜索栏从顶部条状到全屏的动画进度
     val animationProgress: Float by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
         animationSpec = tween(
