@@ -664,12 +664,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-
+                        //底部迷你播放器
                         BottomSheetPlayer(
                             state = playerBottomSheetState,
                             navController = navController
                         )
-
+                        //底部导航
                         NavigationBar(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
