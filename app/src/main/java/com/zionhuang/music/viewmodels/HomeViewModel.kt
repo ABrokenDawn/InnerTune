@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zionhuang.innertube.YouTube
+import com.zionhuang.innertube.models.PlaylistItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.YTItem
 import com.zionhuang.innertube.models.filterExplicit
@@ -39,6 +40,7 @@ class HomeViewModel @Inject constructor(
     val forgottenFavorites = MutableStateFlow<List<Song>?>(null)
     val keepListening = MutableStateFlow<List<LocalItem>?>(null)
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
+    val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
     val homePage = MutableStateFlow<HomePage?>(null)
     val explorePage = MutableStateFlow<ExplorePage?>(null)
 
@@ -68,6 +70,14 @@ class HomeViewModel @Inject constructor(
         allLocalItems.value = (quickPicks.value.orEmpty() + forgottenFavorites.value.orEmpty() + keepListening.value.orEmpty())
             .filter { it is Song || it is Album }
 
+        if (YouTube.cookie != null) { // if logged in
+            YouTube.likedPlaylists().onSuccess {
+                accountPlaylists.value = it
+            }.onFailure {
+                reportException(it)
+            }
+        }
+
         // Similar to artists
         val artistRecommendations =
             database.mostPlayedArtists(fromTimeStamp, limit = 10).first()
@@ -89,14 +99,16 @@ class HomeViewModel @Inject constructor(
                 }
         // Similar to songs
         val songRecommendations =
-            database.mostPlayedSongs(fromTimeStamp, limit = 10)
-                .first().filter { it.album != null }.shuffled().take(2)
-                .mapNotNull {
-                    val endpoint = YouTube.next(WatchEndpoint(videoId = it.id)).getOrNull()?.relatedEndpoint ?: return@mapNotNull null
+            database.mostPlayedSongs(fromTimeStamp, limit = 10).first()
+                .filter { it.album != null }
+                .shuffled().take(2)
+                .mapNotNull { song ->
+                    val endpoint = YouTube.next(WatchEndpoint(videoId = song.id)).getOrNull()?.relatedEndpoint ?: return@mapNotNull null
                     val page = YouTube.related(endpoint).getOrNull() ?: return@mapNotNull null
                     SimilarRecommendation(
-                        title = it,
-                        items = (page.albums.shuffled().take(4) +
+                        title = song,
+                        items = (page.songs.shuffled().take(8) +
+                                page.albums.shuffled().take(4) +
                                 page.artists.shuffled().take(4) +
                                 page.playlists.shuffled().take(4))
                             .filterExplicit(hideExplicit)
@@ -104,7 +116,7 @@ class HomeViewModel @Inject constructor(
                             .ifEmpty { return@mapNotNull null }
                     )
                 }
-        similarRecommendations.value = artistRecommendations + songRecommendations
+        similarRecommendations.value = (artistRecommendations + songRecommendations).shuffled()
 
         YouTube.home().onSuccess { page ->
             homePage.value = page.filterExplicit(hideExplicit)

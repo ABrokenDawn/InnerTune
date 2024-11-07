@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,7 +56,6 @@ import com.zionhuang.music.LocalDownloadUtil
 import com.zionhuang.music.LocalPlayerConnection
 import com.zionhuang.music.R
 import com.zionhuang.music.constants.ListItemHeight
-import com.zionhuang.music.db.entities.SongEntity
 import com.zionhuang.music.models.MediaMetadata
 import com.zionhuang.music.playback.ExoDownloadService
 import com.zionhuang.music.ui.component.BigSeekBar
@@ -67,7 +64,6 @@ import com.zionhuang.music.ui.component.DownloadGridMenu
 import com.zionhuang.music.ui.component.GridMenu
 import com.zionhuang.music.ui.component.GridMenuItem
 import com.zionhuang.music.ui.component.ListDialog
-import com.zionhuang.music.ui.component.MediaMetadataListItem
 import java.time.LocalDateTime
 import kotlin.math.log2
 import kotlin.math.pow
@@ -77,8 +73,7 @@ import kotlin.math.round
 fun PlayerMenu(
     mediaMetadata: MediaMetadata?,
     navController: NavController,
-    playerBottomSheetState: BottomSheetState,
-    isTriggeredFromQueue: Boolean = false,
+    bottomSheetState: BottomSheetState,
     onShowDetailsDialog: () -> Unit = {},
     onDismiss: () -> Unit,
 ) {
@@ -130,7 +125,7 @@ fun PlayerMenu(
                         .clickable {
                             navController.navigate("artist/${artist.id}")
                             showSelectArtistDialog = false
-                            playerBottomSheetState.collapseSoft()
+                            bottomSheetState.collapseSoft()
                             onDismiss()
                         }
                         .padding(horizontal = 24.dp),
@@ -157,56 +152,26 @@ fun PlayerMenu(
         )
     }
 
-    if (!isTriggeredFromQueue) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(top = 24.dp, bottom = 6.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.volume_up),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
 
-            BigSeekBar(
-                progressProvider = playerVolume::value,
-                onProgressChange = { playerConnection.service.playerVolume.value = it },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    } else {
-        MediaMetadataListItem(
-            mediaMetadata = mediaMetadata,
-            badges = {},
-            trailingContent = {
-                val song by database.song(mediaMetadata.id).collectAsState(initial = null)
-
-                IconButton(
-                    onClick = {
-                        database.query {
-                            val currentSong = song
-                            if (currentSong == null) {
-                                insert(mediaMetadata, SongEntity::toggleLike)
-                            } else {
-                                update(currentSong.song.toggleLike())
-                            }
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(if (song?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border),
-                        tint = if (song?.song?.liked == true) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                        contentDescription = null
-                    )
-                }
-            }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 6.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.volume_up),
+            contentDescription = null,
+            modifier = Modifier.size(28.dp)
         )
 
-        HorizontalDivider()
+        BigSeekBar(
+            progressProvider = playerVolume::value,
+            onProgressChange = { playerConnection.service.playerVolume.value = it },
+            modifier = Modifier.weight(1f)
+        )
     }
 
     GridMenu(
@@ -283,7 +248,7 @@ fun PlayerMenu(
             ) {
                 if (artists.size == 1) {
                     navController.navigate("artist/${artists[0].id}")
-                    playerBottomSheetState.collapseSoft()
+                    bottomSheetState.collapseSoft()
                     onDismiss()
                 } else {
                     showSelectArtistDialog = true
@@ -296,7 +261,7 @@ fun PlayerMenu(
                 title = R.string.view_album
             ) {
                 navController.navigate("album/${mediaMetadata.album.id}")
-                playerBottomSheetState.collapseSoft()
+                bottomSheetState.collapseSoft()
                 onDismiss()
             }
         }
@@ -313,34 +278,32 @@ fun PlayerMenu(
             onDismiss()
         }
 
-        if (!isTriggeredFromQueue) {
-            GridMenuItem(
-                icon = R.drawable.info,
-                title = R.string.details
-            ) {
-                onShowDetailsDialog()
-                onDismiss()
+        GridMenuItem(
+            icon = R.drawable.info,
+            title = R.string.details
+        ) {
+            onShowDetailsDialog()
+            onDismiss()
+        }
+        GridMenuItem(
+            icon = R.drawable.equalizer,
+            title = R.string.equalizer
+        ) {
+            val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
+                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, playerConnection.player.audioSessionId)
+                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
             }
-            GridMenuItem(
-                icon = R.drawable.equalizer,
-                title = R.string.equalizer
-            ) {
-                val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-                    putExtra(AudioEffect.EXTRA_AUDIO_SESSION, playerConnection.player.audioSessionId)
-                    putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
-                    putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-                }
-                if (intent.resolveActivity(context.packageManager) != null) {
-                    activityResultLauncher.launch(intent)
-                }
-                onDismiss()
+            if (intent.resolveActivity(context.packageManager) != null) {
+                activityResultLauncher.launch(intent)
             }
-            GridMenuItem(
-                icon = R.drawable.speed,
-                title = R.string.tempo_and_pitch
-            ) {
-                showTempoPitchDialog = true
-            }
+            onDismiss()
+        }
+        GridMenuItem(
+            icon = R.drawable.speed,
+            title = R.string.tempo_and_pitch
+        ) {
+            showTempoPitchDialog = true
         }
     }
 }

@@ -25,8 +25,8 @@ android {
         applicationId = "com.zionhuang.music"
         minSdk = 24
         targetSdk = 35
-        versionCode = 25
-        versionName = "0.5.9"
+        versionCode = 26
+        versionName = "0.5.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -91,6 +91,8 @@ android {
     }
     lint {
         disable += "MissingTranslation"
+        disable += "MissingQuantity"
+        disable += "ImpliedQuantity"
     }
     // avoid DEPENDENCY_INFO_BLOCK for IzzyOnDroid
     dependenciesInfo {
@@ -131,8 +133,6 @@ dependencies {
     implementation(libs.palette)
     implementation(projects.materialColorUtilities)
     implementation(libs.squigglyslider)
-
-    implementation(libs.accompanist.swiperefresh)
 
     implementation(libs.coil)
 
