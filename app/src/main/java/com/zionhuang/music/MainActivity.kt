@@ -166,6 +166,8 @@ class MainActivity : ComponentActivity() {
     lateinit var downloadUtil: DownloadUtil
 
     private var playerConnection by mutableStateOf<PlayerConnection?>(null)
+
+    //用于与音乐服务交互
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             if (service is MusicBinder) {
@@ -183,6 +185,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        //先启动服务，再绑定服务使得用户可以通过UI与服务进行交互
         startService(Intent(this, MusicService::class.java))
         bindService(Intent(this, MusicService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
     }
@@ -194,6 +197,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        //播放任务清空时停止播放 && 正在播放 && Activity正在结束时
+        //停止并解绑服务，清除连接
         if (dataStore.get(StopMusicOnTaskClearKey, false) && playerConnection?.isPlaying?.value == true && isFinishing) {
             stopService(Intent(this, MusicService::class.java))
             unbindService(serviceConnection)
@@ -207,10 +212,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+
+        //持续监听数据存储中的特定设置变化，以动态地控制是否启用屏幕截图保护功能。
         lifecycleScope.launch {
             dataStore.data
                 .map { it[DisableScreenshotKey] ?: false }
-                .distinctUntilChanged()
+                .distinctUntilChanged()//用于确保只有当设置的值发生变化时才触发后续的操作，避免不必要的重复处理
                 .collectLatest {
                     if (it) {
                         window.setFlags(
