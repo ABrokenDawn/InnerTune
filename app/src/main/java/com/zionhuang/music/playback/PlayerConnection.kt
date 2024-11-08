@@ -61,9 +61,16 @@ class PlayerConnection(
     //当前加载的媒体元数据
     val mediaMetadata = MutableStateFlow(player.currentMetadata)
 
+    //当前歌曲
     val currentSong = mediaMetadata.flatMapLatest {
         database.song(it?.id)
     }
+
+    //当前歌曲格式
+    val currentFormat = mediaMetadata.flatMapLatest { mediaMetadata ->
+        database.format(mediaMetadata?.id)
+    }
+
     //是否翻译歌词
     val translating = MutableStateFlow(false)
 
@@ -71,7 +78,7 @@ class PlayerConnection(
     val currentLyrics = combine(
         context.dataStore.data.map {
             it[TranslateLyricsKey] ?: false
-        }.distinctUntilChanged(),
+        }.distinctUntilChanged(),//用于确保只有当设置的值发生变化时才触发后续的操作，避免不必要的重复处理
         mediaMetadata.flatMapLatest { mediaMetadata ->
             database.lyrics(mediaMetadata?.id)
         }
@@ -88,9 +95,6 @@ class PlayerConnection(
         }
     }.stateIn(scope, SharingStarted.Lazily, null)
 
-    val currentFormat = mediaMetadata.flatMapLatest { mediaMetadata ->
-        database.format(mediaMetadata?.id)
-    }
 
     //队列标题
     val queueTitle = MutableStateFlow<String?>(null)
@@ -102,7 +106,7 @@ class PlayerConnection(
     val currentWindowIndex = MutableStateFlow(-1)
     //是否乱序模式
     val shuffleModeEnabled = MutableStateFlow(false)
-    //重复模式
+    //循环播放模式
     val repeatMode = MutableStateFlow(REPEAT_MODE_OFF)
 
     //是否可以跳到上一个
@@ -204,7 +208,7 @@ class PlayerConnection(
         updateCanSkipPreviousAndNext()
     }
 
-    //当重复播放模式状态改变
+    //当循环播放模式状态改变
     override fun onRepeatModeChanged(mode: Int) {
         repeatMode.value = mode
         updateCanSkipPreviousAndNext()
@@ -232,6 +236,7 @@ class PlayerConnection(
         }
     }
 
+    //处理资源（移除player监听）
     fun dispose() {
         player.removeListener(this)
     }
