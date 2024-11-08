@@ -15,6 +15,10 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 
+/**
+ * 封装了对数据库的操作
+ * 通过委托给InternalDatabase实例来实现具体的数据库操作
+ */
 class MusicDatabase(
     private val delegate: InternalDatabase,
 ) : DatabaseDao by delegate.dao {
@@ -39,6 +43,7 @@ class MusicDatabase(
 }
 
 @Database(
+    //列出了这个数据库所包含的实体类
     entities = [
         SongEntity::class,
         ArtistEntity::class,
@@ -54,13 +59,17 @@ class MusicDatabase(
         Event::class,
         RelatedSongMap::class
     ],
+    //列出了数据库中的视图类
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class
     ],
+    //指定了这个数据库的版本号为 12
     version = 12,
+    //表示可以导出数据库的架构信息
     exportSchema = true,
+    //定义了一系列的自动迁移规则
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
@@ -75,6 +84,9 @@ class MusicDatabase(
     ]
 )
 @TypeConverters(Converters::class)
+/**
+ * 数据库核心类，定义了数据库的实体、版本、自动迁移等信息
+ */
 abstract class InternalDatabase : RoomDatabase() {
     abstract val dao: DatabaseDao
 
@@ -90,6 +102,7 @@ abstract class InternalDatabase : RoomDatabase() {
     }
 }
 
+//Migration类用于定义数据库版本之间的手动迁移逻辑
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
         data class OldSongEntity(

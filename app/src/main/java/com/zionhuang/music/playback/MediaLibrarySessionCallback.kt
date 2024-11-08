@@ -47,6 +47,7 @@ class MediaLibrarySessionCallback @Inject constructor(
     var toggleLike: () -> Unit = {}
     var toggleLibrary: () -> Unit = {}
 
+    //在连接建立时修改可用的会话命令，添加了自定义的命令，如切换喜欢状态、切换在库状态、切换随机播放和切换重复模式等
     override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
         val connectionResult = super.onConnect(session, controller)
         return MediaSession.ConnectionResult.accept(
@@ -60,6 +61,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         )
     }
 
+    //处理自定义命令，根据不同的自定义动作执行相应的操作，如调用toggleLike和toggleLibrary方法、切换随机播放模式和切换重复模式等
     override fun onCustomCommand(
         session: MediaSession,
         controller: MediaSession.ControllerInfo,
@@ -75,6 +77,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
     }
 
+    //返回媒体库的根目录项，创建一个不可播放和不可浏览的文件夹项，表示媒体库的根节点
     override fun onGetLibraryRoot(
         session: MediaLibrarySession,
         browser: MediaSession.ControllerInfo,
@@ -95,6 +98,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         )
     )
 
+    //根据不同的父节点 ID 返回相应的子项列表
     override fun onGetChildren(
         session: MediaLibrarySession,
         browser: MediaSession.ControllerInfo,
@@ -176,6 +180,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         )
     }
 
+    //根据给定的媒体 ID 从数据库中查询歌曲信息，并将其转换为MediaItem返回
     override fun onGetItem(
         session: MediaLibrarySession,
         browser: MediaSession.ControllerInfo,
@@ -186,6 +191,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         } ?: LibraryResult.ofError(SessionError.ERROR_UNKNOWN)
     }
 
+    //处理设置媒体项的请求，根据传入的媒体项的 ID 路径确定要播放的歌曲列表，并返回包含媒体项列表、起始索引和起始位置的结果
     override fun onSetMediaItems(
         mediaSession: MediaSession,
         controller: MediaSession.ControllerInfo,
@@ -266,6 +272,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         }
     }
 
+    //创建一个表示资源 drawable 的 URI
     private fun drawableUri(@DrawableRes id: Int) = Uri.Builder()
         .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
         .authority(context.resources.getResourcePackageName(id))
@@ -273,6 +280,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         .appendPath(context.resources.getResourceEntryName(id))
         .build()
 
+    //创建一个可浏览的MediaItem，通常用于表示文件夹或集合等可浏览的项目
     private fun browsableMediaItem(id: String, title: String, subtitle: String?, iconUri: Uri?, mediaType: Int = MediaMetadata.MEDIA_TYPE_MUSIC) =
         MediaItem.Builder()
             .setMediaId(id)
@@ -289,6 +297,7 @@ class MediaLibrarySessionCallback @Inject constructor(
             )
             .build()
 
+    //将歌曲实体转换为可播放的MediaItem，设置媒体 ID、元数据等信息
     private fun Song.toMediaItem(path: String) =
         MediaItem.Builder()
             .setMediaId("$path/$id")
