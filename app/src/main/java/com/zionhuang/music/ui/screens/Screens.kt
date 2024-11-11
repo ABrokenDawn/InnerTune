@@ -16,8 +16,9 @@ sealed class Screens(
     object Artists : Screens(R.string.artists, R.drawable.artist, "artists")
     object Albums : Screens(R.string.albums, R.drawable.album, "albums")
     object Playlists : Screens(R.string.playlists, R.drawable.queue_music, "playlists")
+    object LocalMusic : Screens(R.string.local_music, R.drawable.music_note, "localMusic")
 
     companion object {
-        val MainScreens = listOf(Home, Songs, Artists, Albums, Playlists)
+        val MainScreens = listOf(Home, Songs, Artists, Albums, Playlists,LocalMusic)
     }
 }

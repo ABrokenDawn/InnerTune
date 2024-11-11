@@ -314,6 +314,7 @@ class MainActivity : ComponentActivity() {
                         Screens.Artists.route,
                         Screens.Albums.route,
                         Screens.Playlists.route,
+                        Screens.LocalMusic.route,
                         "settings"
                     )
                     //解构函数
@@ -358,16 +359,18 @@ class MainActivity : ComponentActivity() {
                                 navBackStackEntry?.destination?.route?.startsWith("search/") == true) &&
                                 inSelectMode?.value != true
                     }
+                    //是否显示导航栏
                     val shouldShowNavigationBar = remember(navBackStackEntry, active) {
                         navBackStackEntry?.destination?.route == null ||
                                 navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } && !active
                     }
+                    //导航拦高度
                     val navigationBarHeight by animateDpAsState(
                         targetValue = if (shouldShowNavigationBar) NavigationBarHeight else 0.dp,
                         animationSpec = NavigationBarAnimationSpec,
                         label = ""
                     )
-
+                    //播放器底部栏状态(上滑出现的播放器详情)
                     val playerBottomSheetState = rememberBottomSheetState(
                         dismissedBound = 0.dp,
                         collapsedBound = bottomInset + (if (shouldShowNavigationBar) NavigationBarHeight else 0.dp) + MiniPlayerHeight,

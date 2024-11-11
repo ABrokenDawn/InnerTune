@@ -54,6 +54,9 @@ fun NavGraphBuilder.navigationBuilder(
     composable(Screens.Playlists.route) {
         LibraryPlaylistsScreen(navController)
     }
+    composable(Screens.LocalMusic.route) {
+        LocalMusicScreen(navController)
+    }
     composable("history") {
         HistoryScreen(navController)
     }

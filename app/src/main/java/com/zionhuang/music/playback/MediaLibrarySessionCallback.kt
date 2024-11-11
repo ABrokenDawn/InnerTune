@@ -180,7 +180,7 @@ class MediaLibrarySessionCallback @Inject constructor(
         )
     }
 
-    //根据给定的媒体 ID 从数据库中查询歌曲信息，并将其转换为MediaItem返回
+    //当用户操作请求单个媒体项的详细信息时，根据给定的媒体 ID 从数据库中查询歌曲信息，并将其转换为MediaItem返回
     override fun onGetItem(
         session: MediaLibrarySession,
         browser: MediaSession.ControllerInfo,
