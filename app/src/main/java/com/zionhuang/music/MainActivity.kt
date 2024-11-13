@@ -47,7 +47,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
@@ -740,11 +742,13 @@ class MainActivity : ComponentActivity() {
                                             y = (slideOffset + hideOffset).roundToPx()
                                         )
                                     }
-                                }
+                                },
+                            containerColor = NavigationBarDefaults.containerColor.copy(alpha = 1F)
                         ) {
                             navigationItems.fastForEach { screen ->
+                                val selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true
                                 NavigationBarItem(
-                                    selected = navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true,
+                                    selected = selected,
                                     icon = {
                                         Icon(
                                             painter = painterResource(screen.iconId),
@@ -752,11 +756,14 @@ class MainActivity : ComponentActivity() {
                                         )
                                     },
                                     label = {
-                                        Text(
-                                            text = stringResource(screen.titleId),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                        if (selected){
+                                            Text(
+                                                text = stringResource(screen.titleId),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+
                                     },
                                     onClick = {
                                         if (navBackStackEntry?.destination?.hierarchy?.any { it.route == screen.route } == true) {
@@ -773,7 +780,16 @@ class MainActivity : ComponentActivity() {
                                                 restoreState = true
                                             }
                                         }
-                                    }
+                                    },
+                                    colors = NavigationBarItemColors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,                  //选择项时用于图标的颜色
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,                  //选择项时用于文本标签的颜色
+                                        selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,    //选择项目时用于指示器的颜色
+                                        unselectedIconColor = MaterialTheme.colorScheme.secondary,              //取消选择项时用于图标的颜色
+                                        unselectedTextColor = MaterialTheme.colorScheme.secondary,              //取消选择项时用于文本标签的颜色
+                                        disabledIconColor = MaterialTheme.colorScheme.tertiary,                 //禁用项时用于图标的颜色
+                                        disabledTextColor = MaterialTheme.colorScheme.tertiary,                 //禁用项时用于文本标签的颜色
+                                    ),
                                 )
                             }
                         }
