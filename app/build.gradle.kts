@@ -170,4 +170,5 @@ dependencies {
     "fullImplementation"(libs.opencc4j)
 
     implementation(libs.timber)
+    implementation(libs.permissions)
 }
